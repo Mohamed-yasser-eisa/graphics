@@ -52,29 +52,16 @@ int poses[29][13]={ {0,0,0,0,0,0,0,0,0,0,0,0,0 },
 
 GLfloat angle = 0.0;   /* in degrees */
 GLfloat angle2 = 0.0;   /* in degrees */
-
-
 double thetaR=0;
 double thetaL=0;
-
 double  thetadown=0;
 double  thetaup=0;
-
 static float speed=-0.01;
-
 double eye[] = { 0, 0, -15 };
-
 double center[] = { 0, 0, -1 };
-
 double up[] = { 0, 1, 0 };
-
 double direction[3];
-
 double crossProduct_result[3];
-
-
-
-
 
 //Makes the image into a texture, and returns the id of the texture
 GLuint loadTexture(Image* image) {
@@ -97,11 +84,7 @@ GLuint loadTexture(Image* image) {
 GLuint _textureId; //The id of the texture
 GLuint _textureId1; //The id of the texture
 
-
-
-
 void crossProduct(double a[], double b[], double c[])
-
 {
 
 	c[0] = a[1] * b[2] - a[2] * b[1];
@@ -112,10 +95,7 @@ void crossProduct(double a[], double b[], double c[])
 
 }
 
-
-
 void normalize(double a[])
-
 {
 
 	double norm;
@@ -131,15 +111,8 @@ void normalize(double a[])
 	a[2] /= norm;
 
 }
-
-
-
 void rotatePoint(double a[], double theta, double p[])
-
 {
-
-
-
 	double temp[3];
 
 	temp[0] = p[0];
@@ -147,8 +120,6 @@ void rotatePoint(double a[], double theta, double p[])
 	temp[1] = p[1];
 
 	temp[2] = p[2];
-
-
 
 	temp[0] = -a[2] * p[1] + a[1] * p[2];
 
@@ -192,30 +163,20 @@ void rotatePoint(double a[], double theta, double p[])
 
 }
 
-
-
 void Left()
-
 {
 
     thetaL-=0.001;
     rotatePoint(up,thetaL,eye);
 
 }
-
-
-
 void Right()
 
 {
 	thetaR+=0.001;
     rotatePoint(up,thetaR,eye);
 }
-
-
-
 void Up()
-
 {
 
 	crossProduct(up,center,crossProduct_result);
@@ -316,9 +277,7 @@ void timer(int value)
 void init(void)
 
 {
-     Image* image = loadBMP("floor.bmp");
-      	_textureId = loadTexture(image);
-      	delete image;
+    
 
     glLightfv(GL_LIGHT1, GL_POSITION, light_position);
     glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
@@ -330,6 +289,10 @@ void init(void)
     glMatrixMode(GL_PROJECTION);
 	gluPerspective(65.0, (GLfloat)1024 / (GLfloat)869, 1.0, 60.0);
 
+ Image* image = loadBMP("floor.bmp");
+      	_textureId = loadTexture(image);
+      	delete image;
+          
 }
 
 
@@ -338,21 +301,13 @@ void display(void)
 {
 
 	glClear(GL_COLOR_BUFFER_BIT );
-
    	glClearColor(0.0, 0.0, 0.0, 0.0);
-
-	glShadeModel(GL_FLAT);
-
-	glMatrixMode(GL_MODELVIEW);
-
+    glShadeModel(GL_FLAT);
+    glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
 	gluLookAt(eye[0], eye[1], eye[2], center[0], center[1], center[2], up[0], up[1], up[2]);
-
-    
     glPushMatrix();
 	glTranslatef(0, 0, -1);
-
 	//floor
 	glPushMatrix();
 	glEnable(GL_TEXTURE_2D);
@@ -378,7 +333,7 @@ void display(void)
 	glDisable(GL_TEXTURE_2D);
 
 	glPopMatrix();
-    
+
     
     
     

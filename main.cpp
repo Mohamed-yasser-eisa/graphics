@@ -300,14 +300,18 @@ void display(void)
 
 {
 
-	glClear(GL_COLOR_BUFFER_BIT );
+	//glClear(GL_COLOR_BUFFER_BIT );
    	glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glShadeModel(GL_FLAT);
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
 	gluLookAt(eye[0], eye[1], eye[2], center[0], center[1], center[2], up[0], up[1], up[2]);
-    glPushMatrix();
-	glTranslatef(0, 0, -1);
+
+   // glPushMatrix();
+	//glTranslatef(0, 0, -1);
 	//floor
 	glPushMatrix();
 	glEnable(GL_TEXTURE_2D);

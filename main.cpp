@@ -6,22 +6,154 @@
 #endif
 #include <stdlib.h>
 #include "imageloader.h"
+#include "glm.h"
 #include <math.h>
 
+int windowWidth = 1024;
+int windowHeight = 768;
+//float aspect = float(windowWidth) / float(windowHeight);
 
 static int RightArm = 0, RightArmX=0 ,RightForeArm = 0,LeftArm = 0, LeftArmX = 0,LeftForeArm = 0,RightLeg = 0,RightLegX = 0,
 RightTibiaX = 0,LeftLeg = 0,LeftLegX = 0 , LeftTibiaX = 0,LeftFootZ = 0,fingerbase1=0,fingerbase2=0,fingerbase3=0,fingerbase4=0,fingerbase5=0,fingerbase6=0,
 fingerUp1=0,fingerUp2=0,fingerUp3=0,fingerUp4=0,fingerUp5=0,fingerUp6=0;
 
-
 int moving, startx, starty;
 
+float DRot = 90;
+float Zmax, Zmin;
+GLMmodel* pmodel;
+float VRot =0.0;
+
+GLMmodel* pmodel1;
+GLMmodel* pmodel2 = glmReadOBJ("data/flowers.obj");
+GLMmodel* pmodel3 = glmReadOBJ("data/rose+vase.obj");
+GLMmodel* pmodel4 = glmReadOBJ("data/al.obj");
+/*double eye[] = { 0, 0, 0 };
+double center[] = { 0, 0, -1 };
+double up[] = { 0, 1, 0 };
+*/
+
+// RGBA
+GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 0.0 };
+GLfloat light_diffuse[] = { 0.5, 0.5, 0.5,1.0 };
+GLfloat light_specular[] = {1.0, 1.0, 1.0, 1.0 };
+// x , y, z, w
+GLfloat light_position[] = {0.5,5.0, 0.0, 1.0 };
+GLfloat lightPos1[] = {-0.5,-5.0,-2.0, 1.0 };
+// Material Properties
+GLfloat mat_amb_diff[] = {0.643, 0.753, 0.934, 1.0 };
+GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 1.0 };
+GLfloat shininess[] = {100.0 };  
+//left teapot specular
+GLfloat teapotl_diff[] = { 0.0,0.0, 1.0, 1.0 };
+GLfloat teapotl_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat teapotl_shininess[] = {10.0 };  
+//middle teapot diffuse
+GLfloat teapotm_diff[] = { 1.0, 0, 0.0, 1.0 };
+GLfloat teapotm_specular[] = { 0.0, 0.0, 0.0, 0.0 };
+GLfloat teapotm_shininess[] = {1.0 };  
+//right teapot glosy
+GLfloat teapotr_diff[] = { 1.0, .0, 0.0, 1.0 };
+GLfloat teapotr_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat teapotr_shininess[] = {1000.0 };  
+//cube
+GLfloat cube_diff[] = {1.0,0.0, 0.0, 1.0 };
+GLfloat cube_specular[] = { 0.5, 0.5, 0.5, 1.0 };
+GLfloat cube_shininess[] = {10.0 }; 
+
+
+/*
+// RGBA
+GLfloat light_ambient2[] = { 1.0, 0.0, 0.0, 1.0 };
+GLfloat light_diffuse2[] = { 1.0, 0.0, 0.0,1.0 };
+GLfloat light_specular2[] = {1.0, 1.0, 1.0, 1.0 };
+// x , y, z, w
+GLfloat light_position2[] = {0.5,0.5, 0.5, 1.0 }; 
+// RGBA
+GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 0.0 };
+GLfloat light_diffuse[] = { 0.5, 0.5, 0.5,1.0 };
+GLfloat light_specular[] = {1.0, 1.0, 1.0, 1.0 };
+// x , y, z, w
+GLfloat light_position[] = {0.5,5.0, 0.0, 1.0 };
+GLfloat lightPos1[] = {-0.5,-5.0,-2.0, 1.0 };
+// Material Properties
+GLfloat mat_amb_diff[] = {0.643, 0.753, 0.934, 1.0 };
+GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 1.0 };
+GLfloat shininess[] = {100.0 };  
+*/
+//Makes the image into a texture, and returns the id of the texture
+GLuint loadTexture(Image* image) {
+      GLuint textureId;
+      glGenTextures(1, &textureId); //Make room for our texture
+      glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
+      //Map the image to the texture
+      glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
+                               0,                            //0 for now
+                               GL_RGB,                       //Format OpenGL uses for image
+                               image->width, image->height,  //Width and height
+                               0,                            //The border of the image
+                               GL_RGB, //GL_RGB, because pixels are stored in RGB format
+                               GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
+                                                 //as unsigned numbers
+                               image->pixels);               //The actual pixel data
+      return textureId; //Returns the id of the texture
+}
+
+GLuint _textureId; //The id of the texture
+GLuint _textureId1; //The id of the texture
+
+
+void drawmodel(void)
+{
+		glmUnitize(pmodel1);
+		glmFacetNormals(pmodel1);
+		glmVertexNormals(pmodel1, 90.0);
+		glmScale(pmodel1, .15);
+		glmDraw(pmodel1, GLM_SMOOTH | GLM_MATERIAL);
+}
+
+GLuint startList;
+
+//Initializes 3D rendering
+void initRendering() {
+     	 Image* image = loadBMP("floor.bmp");
+      	_textureId = loadTexture(image);
+      	delete image;
+       // Turn on the power
+        glEnable(GL_LIGHTING);
+        // Flip light switch
+        glEnable(GL_LIGHT0);
+        glEnable(GL_LIGHT1);
+        // assign light parameters
+        glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+        glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+        glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+        glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
+	// Material Properties         
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,mat_amb_diff);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+        glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+	GLfloat lightColor1[] = {1.0f, 1.0f,  1.0f, 1.0f };
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, lightColor1);
+        glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor1);
+        glEnable(GL_NORMALIZE);
+        //Enable smooth shading
+        glShadeModel(GL_SMOOTH);
+        // Enable Depth buffer
+        glEnable(GL_DEPTH_TEST);
+}
+
+/*
 float light_ambient[] = {4.0, 4.0, 1.0, 1.0};
 float light_diffuse[] = {1.0, 0.0, 0.0, 1.0};
 float light_specular[] = {1.0, 1.0, 1.0, 1.0};
 float light_position[] = {0.0, 1.0, 4.0, 1.0};
+*/
 
-int poses[29][13]={ {0,0,0,0,0,0,0,0,0,0,0,0,0 },
+int poses[41][13]={ {0,0,0,0,0,0,0,0,0,0,0,0,0 },
                    {0,0,0,0,0,0,0,10,-10,0,-10,-10,0},
                    {0,0,0,0,0,0,0,20,-20,0,-20,-20,0 },
                    {0,0,0,0,0,0,0,30,-30,0,-30,-30,0 },
@@ -48,7 +180,19 @@ int poses[29][13]={ {0,0,0,0,0,0,0,0,0,0,0,0,0 },
                    {80,0,0,-80,0,0,40,0,0,-40,0,0,0 },
                    {60,0,0,-60,0,0,30,0,0,-30,0,0,0 },
                    {40,0,0,-40,0,0,20,0,0,-20,0,0,0 },
-                   {20,0,0,-20,0,0,10,0,0,-10,0,0,0 }};
+                   {20,0,0,-20,0,0,10,0,0,-10,0,0,0 },
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0 },
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0 },
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0 },
+                   {0,0,0,0,0,0,0,10,-10,0,-10,-10,0},
+                   {0,0,0,0,0,0,0,20,-20,0,-20,-20,0 },
+                   {0,0,0,0,0,0,0,30,-30,0,-30,-30,0 },
+                   {0,0,0,0,0,0,0,40,-40,0,-40,-40,0 },
+                   {0,0,0,0,0,0,0,50,-30,0,-50,-30,0 },
+                   {0,0,0,0,0,0,0,60,-20,0,-60,-20,0 },
+                   {0,0,0,0,0,0,0,70,-10,0,-70,-10,0 },
+                   {0,0,0,0,0,0,0,80,0,0,-80,0,0 },
+                   {0,0,0,0,0,0,0,90,0,0,0,-90,0 }};
 
 GLfloat angle = 0.0;   /* in degrees */
 GLfloat angle2 = 0.0;   /* in degrees */
@@ -63,26 +207,6 @@ double up[] = { 0, 1, 0 };
 double direction[3];
 double crossProduct_result[3];
 
-//Makes the image into a texture, and returns the id of the texture
-GLuint loadTexture(Image* image) {
-      GLuint textureId;
-      glGenTextures(1, &textureId); //Make room for our texture
-      glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
-      //Map the image to the texture
-      glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
-                               0,                            //0 for now
-                               GL_RGB,                       //Format OpenGL uses for image
-                               image->width, image->height,  //Width and height
-                               0,                            //The border of the image
-                               GL_RGB, //GL_RGB, because pixels are stored in RGB format
-                               GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
-                                                 //as unsigned numbers
-                               image->pixels);               //The actual pixel data
-      return textureId; //Returns the id of the texture
-}
-
-GLuint _textureId; //The id of the texture
-GLuint _textureId1; //The id of the texture
 
 void crossProduct(double a[], double b[], double c[])
 {
@@ -165,10 +289,8 @@ void rotatePoint(double a[], double theta, double p[])
 
 void Left()
 {
-
     thetaL-=0.001;
     rotatePoint(up,thetaL,eye);
-
 }
 void Right()
 
@@ -265,7 +387,7 @@ void setPoses(int framNum)
 static int f =0;
 void timer(int value)
 {
-    f=f%29;
+    f=f%41;
     setPoses(f);
     f++;
     glutPostRedisplay();
@@ -277,142 +399,206 @@ void timer(int value)
 void init(void)
 
 {
+    glEnable(GL_LIGHTING);
     
+        glEnable(GL_LIGHT2);
+	
+        glLightfv(GL_LIGHT2, GL_AMBIENT, light_ambient);
+        glLightfv(GL_LIGHT2, GL_DIFFUSE, light_diffuse);
+        glLightfv(GL_LIGHT2, GL_SPECULAR, light_specular);
+	     GLfloat lightColor2[] = {1.0f, 1.0f,  1.0f, 1.0f };
+        glLightfv(GL_LIGHT2, GL_DIFFUSE, lightColor2);
+        glLightfv(GL_LIGHT2, GL_POSITION, lightPos1);
 
+        // Enable Depth buffer
+        glEnable(GL_DEPTH_TEST);
+///////////////////////////////////////////////////////////////////////////////////
+    /*
     glLightfv(GL_LIGHT1, GL_POSITION, light_position);
     glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
     glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
     glEnable(GL_LIGHT1);
     glEnable(GL_LIGHTING);
-
+*/
     glMatrixMode(GL_PROJECTION);
 	gluPerspective(65.0, (GLfloat)1024 / (GLfloat)869, 1.0, 60.0);
-
- Image* image = loadBMP("floor.bmp");
-      	_textureId = loadTexture(image);
-      	delete image;
           
 }
+
+void
+screen_menu(int value)
+{
+
+	char* name = 0;
+
+	switch (value) {
+	case 'a':
+		name = "data/al.obj";
+		break;
+	case 's':
+		name = "data/soccerball.obj";
+		break;
+	case 'd':
+		name = "data/dolphins.obj";
+		break;
+	case 'f':
+		name = "data/flowers.obj";
+		break;
+	case 'j':
+		name = "data/f-16.obj";
+		break;
+	case 'p':
+		name = "data/porsche.obj";
+		break;
+	case 'r':
+		name = "data/rose+vase.obj";
+		break;
+	case 'D':
+		name = "data/dragon-fixed.obj";
+		break;
+	}
+
+	if (name) {
+		pmodel = glmReadOBJ(name);
+		if (!pmodel) exit(0);
+		glmUnitize(pmodel);
+		glmFacetNormals(pmodel);
+		glmVertexNormals(pmodel, 90.0);
+		glmScale(pmodel, .15);
+	}
+
+	glutPostRedisplay();
+}
+
+
+void drawmodel1(void)
+{
+	if (!pmodel) {
+		pmodel = glmReadOBJ("data/rose+vase.obj");
+
+		if (!pmodel) exit(0);
+		glmUnitize(pmodel);
+		glmFacetNormals(pmodel);
+		glmVertexNormals(pmodel, 90.0);
+		glmScale(pmodel, .15);
+	}
+	glmDraw(pmodel, GLM_SMOOTH | GLM_MATERIAL);
+}
+
+
+
 
 
 void display(void)
 
 {
+    glClearColor(0.0, 0.0, 0.2, 0.0);
+        // Clear Depth and Color buffers
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//glClear(GL_COLOR_BUFFER_BIT );
-   	glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
-    glShadeModel(GL_FLAT);
-    glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+        gluLookAt(eye[0], eye[1], eye[2], center[0], center[1], center[2], up[0], up[1], up[2]);
 
-	gluLookAt(eye[0], eye[1], eye[2], center[0], center[1], center[2], up[0], up[1], up[2]);
+    glPushMatrix();
+        glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
+  
+        glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+        glPopMatrix();
+        //materials properties
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,mat_amb_diff);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+        glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 
-   // glPushMatrix();
-	//glTranslatef(0, 0, -1);
+
+//(sides, up, forward)
+	glPushMatrix();
+	glTranslatef(0, 0, -1);
 	//floor
 	glPushMatrix();
 	glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, _textureId);
-
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glBegin(GL_QUADS);
-
+    glBegin(GL_QUADS);
 	glNormal3f(0.0,-1.0,0.0);
-	glTexCoord2f(0.0f, 0.0f);
-        glVertex3f(-7.0,-3.7,2);
+	
+        glTexCoord2f(0.0f, 0.0f);
+
+        glVertex3f(-15,-3.8,25);
+
         glTexCoord2f(5.0f,  0.0f);
-        glVertex3f(7.0,-3.7,2);
+
+        glVertex3f(15,-3.8,25);
+
         glTexCoord2f(5.0f,  20.0f);
-        glVertex3f(10.0,-3.7,-7);
+
+        glVertex3f(15,-3.8,-25);
+
         glTexCoord2f(0.0f, 20.0f);
-        glVertex3f(-10.0,-3.7,-7);
+
+        glVertex3f(-15,-3.8,-25);
         glEnd();
 	glDisable(GL_TEXTURE_2D);
-
 	glPopMatrix();
 
-    
-    
-    
-    glPushMatrix();
-
-   glRotatef(angle2, 1.0, 0.0, 0.0);
-   glRotatef(angle, 0.0, 1.0, 0.0);
-
+glRotatef(angle2, 1.0, 0.0, 0.0);
+glRotatef(angle, 0.0, 1.0, 0.0);
 
 // Drawing Trunk
-
    glPushMatrix();
-
    glTranslatef(0.0,1.0,0.0);
    glScalef (2.0,3.0, 0.6); //S1
    glutWireCube(1.0);
-   //glutSolidCube(1.0);
    glPopMatrix();
-
 // Drawing the Head
    glPushMatrix();
-
    glTranslatef(0.0,3.0,0.0);
    glutWireSphere(0.5,30,30);
-
    glPopMatrix();
-
-
-glPushMatrix();
-
-   // Drawing Right Arm
+// Drawing Right Arm
+   glPushMatrix();
    glTranslatef(1.1,2.4,0.0);
    glRotatef ((GLfloat)RightArm, 0.0, 0.0, 1.0); // RightArm
    glRotatef ((GLfloat)RightArmX, 0.0, 1.0, 0.0);
    glTranslatef(-1.1,-2.4,0.0);
 
-   glPushMatrix();
 
+   glPushMatrix();
    glTranslatef(1.2,1.8,0);
    glScalef(0.2,1.2,0.3);
    glutWireCube(1.0);
-   //glutSolidCube(1.0);
    glPopMatrix();
 
-   // Drawing Right ForeArm
-
+// Drawing Right ForeArm
    glTranslatef(1.2,1.2,0.0);
    glRotatef ((GLfloat) RightForeArm, 1.0, 0.0, 0.0); //RightForeArm
    glTranslatef(-1.2,-1.2,0.0);
-
    glPushMatrix();
-
    glTranslatef(1.2,0.6,0);
    glScalef(0.2,1.2,0.3);
    glutWireCube(1.0);
-  //glutSolidCube(1.0);
    glPopMatrix();
 
-   // Drawing Finger1
+// Drawing Finger1
 
-glPushMatrix();
-
+    glPushMatrix();
     glTranslatef(1.3,0.0,0.1);
     glRotatef ((GLfloat) fingerbase1, 0.0, 0.0, 1.0); //finger1
     glTranslatef(-0.025,-0.1,0.0);
 
-  // Drawing base1
+// Drawing base1
 
     glPushMatrix();
-        glScalef(0.05,0.2,0.1);
-        glutWireCube(1.0);
-        //glutSolidCube(1.0);
+    glScalef(0.05,0.2,0.1);
+    glutWireCube(1.0);
     glPopMatrix();
 
-  // Drawing the tip1
+// Drawing the tip1
     glTranslatef(0.025,-0.1,0);
     glRotatef ((GLfloat) fingerUp1, 0.0, 0.0, 1.0); //finger1
     glTranslatef(-0.025,-0.1,0.0);
@@ -1216,37 +1402,115 @@ static void motion(int x, int y)
   }
 }
 
+void correct()
+{
+	double speed = 0.001;
+	if (eye[0]>0)
+	{
+		eye[0] -= speed;
+		center[0] -= speed;
+	}
+	else
+	{
+		eye[0] += speed;
+		center[0] += speed;
+	}
+
+	if (DRot == 0)
+	{
+		if ((eye[2] >= -1.2 && eye[2] <= -1) || eye[2]>0)
+		{
+			eye[2] -= speed;
+			center[2] -= speed;
+		}
+		else
+		{
+			eye[2] += speed;
+			center[2] += speed;
+		}
+	}
+	else
+	{
+		if (eye[2]>0)
+		{
+			eye[2] -= speed;
+			center[2] -= speed;
+		}
+		else
+		{
+			eye[2] += speed;
+			center[2] += speed;
+		}
+	}
+
+}
+void SetBound()
+{
+	if (DRot == 0 || eye[0]> 0.15 || eye[0]< -0.15)
+	{
+		if (eye[2] >= -1)
+		{
+			Zmax = 0.7;
+			Zmin = -0.8;
+		}
+		else
+		{
+			Zmax = -1.2;
+			Zmin = -2.4;
+		}
+	}
+	else
+	{
+		Zmax = 0.7;
+		Zmin = -2.4;
+	}
+}
+
 
 int main(int argc, char **argv)
 
 {
-
-	glutInit(&argc, argv);
-
+    glutInit(&argc, argv);
+	glutInitWindowSize(windowWidth, windowHeight);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-
-	glutInitWindowSize(1000, 1000);
-
-	glutInitWindowPosition(100, 100);
-
-	glutCreateWindow("body");
-
-	init();
-
-	glutMouseFunc(mouse);
-
-    glutMotionFunc(motion);
-
+	glutCreateWindow("Final Project");
+	initRendering();
 	glutDisplayFunc(display);
-
+    init();
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
+	//glutDisplayFunc(display);
     glutSpecialFunc(specialKeys);
-
 	glutKeyboardFunc(keyboard);
-
 	glutTimerFunc(0,timer,0);
 
+	glutCreateMenu(screen_menu);
+	glutAddMenuEntry("Models", 0);
+	glutAddMenuEntry("", 0);
+	glutAddMenuEntry("Soccerball", 's');
+	glutAddMenuEntry("Al Capone", 'a');
+	glutAddMenuEntry("F-16 Jet", 'j');
+	glutAddMenuEntry("Dolphins", 'd');
+	glutAddMenuEntry("Flowers", 'f');
+	glutAddMenuEntry("Porsche", 'p');
+	glutAddMenuEntry("Rose", 'r');
+	glutAddMenuEntry("Dragon", 'D');
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
+/*	glutSpecialFunc(specialKeys);
+	glutKeyboardFunc(Keyboard);
+	Timer(0);
+	glutCreateMenu(screen_menu);
+   
+	glutAddMenuEntry("Models", 0);
+	glutAddMenuEntry("", 0);
+	glutAddMenuEntry("wood2", 's');
+	glutAddMenuEntry("wood", 'a');
+	glutAddMenuEntry("metal", 'd');
+
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+    */
+	//glutTimerFunc(0,Timer1,0);
 	glutMainLoop();
-
 	return 0;
 }

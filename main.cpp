@@ -902,9 +902,14 @@ glPopMatrix();
 
 glPopMatrix();
 
+glPushMatrix();
+    	glTranslatef(0.0, 0.015, -1.6);
+    	//glRotatef(VRot,0,1,0);
+    	// glScalef(.25, .25, .25);
+    	drawmodel1();
+	glPopMatrix();
+
    glPopMatrix();
-
-
 	glutSwapBuffers();
 
 }

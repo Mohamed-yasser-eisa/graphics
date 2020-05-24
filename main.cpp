@@ -11,15 +11,16 @@
 
 int windowWidth = 1024;
 int windowHeight = 768;
-//float aspect = float(windowWidth) / float(windowHeight);
 
 static int RightArm = 0, RightArmX=0 ,RightForeArm = 0,LeftArm = 0, LeftArmX = 0,LeftForeArm = 0,RightLeg = 0,RightLegX = 0,
 RightTibiaX = 0,LeftLeg = 0,LeftLegX = 0 , LeftTibiaX = 0,LeftFootZ = 0,fingerbase1=0,fingerbase2=0,fingerbase3=0,fingerbase4=0,fingerbase5=0,fingerbase6=0,
 fingerUp1=0,fingerUp2=0,fingerUp3=0,fingerUp4=0,fingerUp5=0,fingerUp6=0;
 
 int moving, startx, starty;
+float a=0.0,s=-1.5,d=-0.6;
 
 float DRot = 90;
+int rx=0,ry=0,rz=0,q=10,w=10,e=10;
 float Zmax, Zmin;
 GLMmodel* pmodel;
 float VRot =0.0;
@@ -28,47 +29,20 @@ GLMmodel* pmodel1;
 GLMmodel* pmodel2 = glmReadOBJ("data/flowers.obj");
 GLMmodel* pmodel3 = glmReadOBJ("data/rose+vase.obj");
 GLMmodel* pmodel4 = glmReadOBJ("data/al.obj");
-/*double eye[] = { 0, 0, 0 };
+/*
+double eye[] = { 0, 0, 0 };
 double center[] = { 0, 0, -1 };
 double up[] = { 0, 1, 0 };
 */
 
-// RGBA
-GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 0.0 };
-GLfloat light_diffuse[] = { 0.5, 0.5, 0.5,1.0 };
-GLfloat light_specular[] = {1.0, 1.0, 1.0, 1.0 };
-// x , y, z, w
-GLfloat light_position[] = {0.5,5.0, 0.0, 1.0 };
-GLfloat lightPos1[] = {-0.5,-5.0,-2.0, 1.0 };
-// Material Properties
-GLfloat mat_amb_diff[] = {0.643, 0.753, 0.934, 1.0 };
-GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 1.0 };
-GLfloat shininess[] = {100.0 };  
-//left teapot specular
-GLfloat teapotl_diff[] = { 0.0,0.0, 1.0, 1.0 };
-GLfloat teapotl_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-GLfloat teapotl_shininess[] = {10.0 };  
-//middle teapot diffuse
-GLfloat teapotm_diff[] = { 1.0, 0, 0.0, 1.0 };
-GLfloat teapotm_specular[] = { 0.0, 0.0, 0.0, 0.0 };
-GLfloat teapotm_shininess[] = {1.0 };  
-//right teapot glosy
-GLfloat teapotr_diff[] = { 1.0, .0, 0.0, 1.0 };
-GLfloat teapotr_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-GLfloat teapotr_shininess[] = {1000.0 };  
-//cube
-GLfloat cube_diff[] = {1.0,0.0, 0.0, 1.0 };
-GLfloat cube_specular[] = { 0.5, 0.5, 0.5, 1.0 };
-GLfloat cube_shininess[] = {10.0 }; 
-
-
-/*
 // RGBA
 GLfloat light_ambient2[] = { 1.0, 0.0, 0.0, 1.0 };
 GLfloat light_diffuse2[] = { 1.0, 0.0, 0.0,1.0 };
 GLfloat light_specular2[] = {1.0, 1.0, 1.0, 1.0 };
 // x , y, z, w
 GLfloat light_position2[] = {0.5,0.5, 0.5, 1.0 }; 
+
+
 // RGBA
 GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 0.0 };
 GLfloat light_diffuse[] = { 0.5, 0.5, 0.5,1.0 };
@@ -76,75 +50,12 @@ GLfloat light_specular[] = {1.0, 1.0, 1.0, 1.0 };
 // x , y, z, w
 GLfloat light_position[] = {0.5,5.0, 0.0, 1.0 };
 GLfloat lightPos1[] = {-0.5,-5.0,-2.0, 1.0 };
+
 // Material Properties
 GLfloat mat_amb_diff[] = {0.643, 0.753, 0.934, 1.0 };
 GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 1.0 };
-GLfloat shininess[] = {100.0 };  
-*/
-//Makes the image into a texture, and returns the id of the texture
-GLuint loadTexture(Image* image) {
-      GLuint textureId;
-      glGenTextures(1, &textureId); //Make room for our texture
-      glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
-      //Map the image to the texture
-      glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
-                               0,                            //0 for now
-                               GL_RGB,                       //Format OpenGL uses for image
-                               image->width, image->height,  //Width and height
-                               0,                            //The border of the image
-                               GL_RGB, //GL_RGB, because pixels are stored in RGB format
-                               GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
-                                                 //as unsigned numbers
-                               image->pixels);               //The actual pixel data
-      return textureId; //Returns the id of the texture
-}
+GLfloat shininess[] = {100.0 };
 
-GLuint _textureId; //The id of the texture
-GLuint _textureId1; //The id of the texture
-
-
-void drawmodel(void)
-{
-		glmUnitize(pmodel1);
-		glmFacetNormals(pmodel1);
-		glmVertexNormals(pmodel1, 90.0);
-		glmScale(pmodel1, .15);
-		glmDraw(pmodel1, GLM_SMOOTH | GLM_MATERIAL);
-}
-
-GLuint startList;
-
-//Initializes 3D rendering
-void initRendering() {
-     	 Image* image = loadBMP("floor.bmp");
-      	_textureId = loadTexture(image);
-      	delete image;
-       // Turn on the power
-        glEnable(GL_LIGHTING);
-        // Flip light switch
-        glEnable(GL_LIGHT0);
-        glEnable(GL_LIGHT1);
-        // assign light parameters
-        glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-        glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-        glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
-        glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
-        glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
-	// Material Properties         
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,mat_amb_diff);
-        glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-        glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
-	GLfloat lightColor1[] = {1.0f, 1.0f,  1.0f, 1.0f };
-        glLightfv(GL_LIGHT1, GL_DIFFUSE, lightColor1);
-        glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor1);
-        glEnable(GL_NORMALIZE);
-        //Enable smooth shading
-        glShadeModel(GL_SMOOTH);
-        // Enable Depth buffer
-        glEnable(GL_DEPTH_TEST);
-}
 
 /*
 float light_ambient[] = {4.0, 4.0, 1.0, 1.0};
@@ -343,7 +254,6 @@ void moveForward()
 	center[0] -= direction[0] * speed;
 	center[1] -= direction[1] * speed;
 	center[2] -= direction[2] * speed;
-
 }
 
 
@@ -365,7 +275,6 @@ void moveBack()
 	center[2] += direction[2] * speed;
 
 }
-
 
 void setPoses(int framNum)
 {
@@ -403,9 +312,9 @@ void init(void)
     
         glEnable(GL_LIGHT2);
 	
-        glLightfv(GL_LIGHT2, GL_AMBIENT, light_ambient);
-        glLightfv(GL_LIGHT2, GL_DIFFUSE, light_diffuse);
-        glLightfv(GL_LIGHT2, GL_SPECULAR, light_specular);
+        glLightfv(GL_LIGHT2, GL_AMBIENT, light_ambient2);
+        glLightfv(GL_LIGHT2, GL_DIFFUSE, light_diffuse2);
+        glLightfv(GL_LIGHT2, GL_SPECULAR, light_specular2);
 	     GLfloat lightColor2[] = {1.0f, 1.0f,  1.0f, 1.0f };
         glLightfv(GL_LIGHT2, GL_DIFFUSE, lightColor2);
         glLightfv(GL_LIGHT2, GL_POSITION, lightPos1);
@@ -420,7 +329,8 @@ void init(void)
     glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
     glEnable(GL_LIGHT1);
     glEnable(GL_LIGHTING);
-*/
+    */
+
     glMatrixMode(GL_PROJECTION);
 	gluPerspective(65.0, (GLfloat)1024 / (GLfloat)869, 1.0, 60.0);
           
@@ -440,13 +350,13 @@ screen_menu(int value)
 		name = "data/soccerball.obj";
 		break;
 	case 'd':
-		name = "data/dolphins.obj";
+		name = "data/15581_Equestrian_Obstacles-Post_and_Plank_v1.obj";
 		break;
 	case 'f':
 		name = "data/flowers.obj";
 		break;
 	case 'j':
-		name = "data/f-16.obj";
+		name = "data/11703_skateboard_v1_L3.obj";
 		break;
 	case 'p':
 		name = "data/porsche.obj";
@@ -487,13 +397,77 @@ void drawmodel1(void)
 }
 
 
+//Makes the image into a texture, and returns the id of the texture
+GLuint loadTexture(Image* image) {
+      GLuint textureId;
+      glGenTextures(1, &textureId); //Make room for our texture
+      glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
+      //Map the image to the texture
+      glTexImage2D(GL_TEXTURE_2D,                //Always GL_TEXTURE_2D
+                               0,                            //0 for now
+                               GL_RGB,                       //Format OpenGL uses for image
+                               image->width, image->height,  //Width and height
+                               0,                            //The border of the image
+                               GL_RGB, //GL_RGB, because pixels are stored in RGB format
+                               GL_UNSIGNED_BYTE, //GL_UNSIGNED_BYTE, because pixels are stored
+                                                 //as unsigned numbers
+                               image->pixels);               //The actual pixel data
+      return textureId; //Returns the id of the texture
+}
 
+GLuint _textureId; //The id of the texture
+GLuint _textureId1; //The id of the texture
+
+
+void drawmodel(void)
+{
+		glmUnitize(pmodel1);
+		glmFacetNormals(pmodel1);
+		glmVertexNormals(pmodel1, 90.0);
+		glmScale(pmodel1, .15);
+		glmDraw(pmodel1, GLM_SMOOTH | GLM_MATERIAL);
+}
+
+GLuint startList;
+
+//Initializes 3D rendering
+void initRendering() {
+     	 Image* image = loadBMP("floor.bmp");
+      	_textureId = loadTexture(image);
+      	delete image;
+        // Turn on the power
+        glEnable(GL_LIGHTING);
+        // Flip light switch
+        glEnable(GL_LIGHT0);
+        glEnable(GL_LIGHT1);
+        // assign light parameters
+        glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+        glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+        glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+        glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
+	// Material Properties         
+       glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,mat_amb_diff);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+        glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+	GLfloat lightColor1[] = {1.0f, 1.0f,  1.0f, 1.0f };
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, lightColor1);
+        glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor1);
+        glEnable(GL_NORMALIZE);
+        //Enable smooth shading
+        glShadeModel(GL_SMOOTH);
+        // Enable Depth buffer
+        glEnable(GL_DEPTH_TEST);
+
+}
 
 
 void display(void)
 
 {
-    glClearColor(0.0, 0.0, 0.2, 0.0);
+        glClearColor(0.0, 0.0, 0.2, 0.0);
         // Clear Depth and Color buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -502,30 +476,28 @@ void display(void)
 
         gluLookAt(eye[0], eye[1], eye[2], center[0], center[1], center[2], up[0], up[1], up[2]);
 
-    glPushMatrix();
+glPushMatrix();
         glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
-  
         glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-        glPopMatrix();
+glPopMatrix();
         //materials properties
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,mat_amb_diff);
         glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
         glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+        //(sides, up, forward)
 
-
-//(sides, up, forward)
-	glPushMatrix();
+glPushMatrix();
 	glTranslatef(0, 0, -1);
 	//floor
-	glPushMatrix();
-	glEnable(GL_TEXTURE_2D);
+glPushMatrix();
+	    glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, _textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBegin(GL_QUADS);
-	glNormal3f(0.0,-1.0,0.0);
+        glBegin(GL_QUADS);
+	    glNormal3f(0.0,-1.0,0.0);
 	
         glTexCoord2f(0.0f, 0.0f);
 
@@ -543,132 +515,131 @@ void display(void)
 
         glVertex3f(-15,-3.8,-25);
         glEnd();
-	glDisable(GL_TEXTURE_2D);
-	glPopMatrix();
+	    glDisable(GL_TEXTURE_2D);
+glPopMatrix();
+glPushMatrix();
+        glRotatef(angle2, 1.0, 0.0, 0.0);
+        glRotatef(angle, 0.0, 1.0, 0.0);
 
-glRotatef(angle2, 1.0, 0.0, 0.0);
-glRotatef(angle, 0.0, 1.0, 0.0);
-
-// Drawing Trunk
-   glPushMatrix();
-   glTranslatef(0.0,1.0,0.0);
-   glScalef (2.0,3.0, 0.6); //S1
-   glutWireCube(1.0);
-   glPopMatrix();
-// Drawing the Head
-   glPushMatrix();
-   glTranslatef(0.0,3.0,0.0);
-   glutWireSphere(0.5,30,30);
-   glPopMatrix();
-// Drawing Right Arm
-   glPushMatrix();
-   glTranslatef(1.1,2.4,0.0);
-   glRotatef ((GLfloat)RightArm, 0.0, 0.0, 1.0); // RightArm
-   glRotatef ((GLfloat)RightArmX, 0.0, 1.0, 0.0);
-   glTranslatef(-1.1,-2.4,0.0);
+    // Drawing Trunk
+glPushMatrix();
+        glTranslatef(0.0,1.0,0.0);
+        glScalef (2.0,3.0, 0.6); //S1
+        glutWireCube(1.0);
+glPopMatrix();
+    // Drawing the Head
+glPushMatrix();
+        glTranslatef(0.0,3.0,0.0);
+        glutWireSphere(0.5,30,30);
+glPopMatrix();
+    // Drawing Right Arm
+glPushMatrix();
+        glTranslatef(1.1,2.4,0.0);
+        glRotatef ((GLfloat)RightArm, 0.0, 0.0, 1.0); // RightArm
+        glRotatef ((GLfloat)RightArmX, 0.0, 1.0, 0.0);
+        glTranslatef(-1.1,-2.4,0.0);
 
 
-   glPushMatrix();
-   glTranslatef(1.2,1.8,0);
-   glScalef(0.2,1.2,0.3);
-   glutWireCube(1.0);
-   glPopMatrix();
+glPushMatrix();
+       glTranslatef(1.2,1.8,0);
+       glScalef(0.2,1.2,0.3);
+       glutWireCube(1.0);
+glPopMatrix();
 
 // Drawing Right ForeArm
-   glTranslatef(1.2,1.2,0.0);
-   glRotatef ((GLfloat) RightForeArm, 1.0, 0.0, 0.0); //RightForeArm
-   glTranslatef(-1.2,-1.2,0.0);
-   glPushMatrix();
-   glTranslatef(1.2,0.6,0);
-   glScalef(0.2,1.2,0.3);
-   glutWireCube(1.0);
-   glPopMatrix();
-
-// Drawing Finger1
-
-    glPushMatrix();
-    glTranslatef(1.3,0.0,0.1);
-    glRotatef ((GLfloat) fingerbase1, 0.0, 0.0, 1.0); //finger1
-    glTranslatef(-0.025,-0.1,0.0);
-
-// Drawing base1
-
-    glPushMatrix();
-    glScalef(0.05,0.2,0.1);
-    glutWireCube(1.0);
-    glPopMatrix();
-
-// Drawing the tip1
-    glTranslatef(0.025,-0.1,0);
-    glRotatef ((GLfloat) fingerUp1, 0.0, 0.0, 1.0); //finger1
-    glTranslatef(-0.025,-0.1,0.0);
-
-
-    glPushMatrix();
-        glScalef(0.05,0.2,0.1);
-        glutWireCube(1.0);
-        //glutSolidCube(1.0);
-    glPopMatrix();
-
-glPopMatrix();
-
-  //Drawing Finger2
-
+       glTranslatef(1.2,1.2,0.0);
+       glRotatef ((GLfloat) RightForeArm, 1.0, 0.0, 0.0); //RightForeArm
+       glTranslatef(-1.2,-1.2,0.0);
 glPushMatrix();
-
-    glTranslatef(1.3,0.0,-0.1);
-    glRotatef ((GLfloat) fingerbase2, 0.0, 0.0, 1.0); //finger1
-    glTranslatef(-0.025,-0.1,0.0);
-
-  // Drawing base2
-
-    glPushMatrix();
-        glScalef(0.05,0.2,0.1);
-        glutWireCube(1.0);
-        //glutSolidCube(1.0);
-    glPopMatrix();
-
-  // Drawing the tip2
-    glTranslatef(0.025,-0.1,0);
-    glRotatef ((GLfloat) fingerUp2, 0.0, 0.0, 1.0); //finger1
-    glTranslatef(-0.025,-0.1,0.0);
-
-
-    glPushMatrix();
-        glScalef(0.05,0.2,0.1);
-        glutWireCube(1.0);
-        //glutSolidCube(1.0);
-    glPopMatrix();
-
-glPopMatrix();
-
-//Drawing Finger3
-
-glPushMatrix();
-
-    glTranslatef(1.15,0.0,-0.05);
-    glRotatef ((GLfloat) fingerbase3, 0.0, 0.0, 1.0); //finger1
-    glTranslatef(-0.025,-0.1,0.0);
-
-  // Drawing base3
-
-    glPushMatrix();
-        glScalef(0.05,0.2,0.1);
+       glTranslatef(1.2,0.6,0);
+       glScalef(0.2,1.2,0.3);
        glutWireCube(1.0);
-       //glutSolidCube(1.0);
-    glPopMatrix();
+glPopMatrix();
 
-  // Drawing the tip3
-    glTranslatef(0.025,-0.1,0);
-    glRotatef ((GLfloat) fingerUp3, 0.0, 0.0, 1.0); //finger1
-    glTranslatef(-0.025,-0.1,0.0);
+    // Drawing Finger1
+
+glPushMatrix();
+       glTranslatef(1.3,0.0,0.1);
+       glRotatef ((GLfloat) fingerbase1, 0.0, 0.0, 1.0); //finger1
+       glTranslatef(-0.025,-0.1,0.0);
+
+    // Drawing base1
+
+glPushMatrix();
+       glScalef(0.05,0.2,0.1);
+       glutWireCube(1.0);
+glPopMatrix();
+
+    // Drawing the tip1
+       glTranslatef(0.025,-0.1,0);
+       glRotatef ((GLfloat) fingerUp1, 0.0, 0.0, 1.0); //finger1
+       glTranslatef(-0.025,-0.1,0.0);
 
 
-    glPushMatrix();
+glPushMatrix();
+       glScalef(0.05,0.2,0.1);
+       glutWireCube(1.0);
+    //glutSolidCube(1.0);
+glPopMatrix();
+
+glPopMatrix();
+
+    //Drawing Finger2
+
+glPushMatrix();
+
+       glTranslatef(1.3,0.0,-0.1);
+       glRotatef ((GLfloat) fingerbase2, 0.0, 0.0, 1.0); //finger1
+       glTranslatef(-0.025,-0.1,0.0);
+
+    // Drawing base2
+
+glPushMatrix();
+       glScalef(0.05,0.2,0.1);
+       glutWireCube(1.0);
+    //glutSolidCube(1.0);
+glPopMatrix();
+
+    // Drawing the tip2
+      glTranslatef(0.025,-0.1,0);
+      glRotatef ((GLfloat) fingerUp2, 0.0, 0.0, 1.0); //finger1
+      glTranslatef(-0.025,-0.1,0.0);
+
+glPushMatrix();
         glScalef(0.05,0.2,0.1);
         glutWireCube(1.0);
-       //glutSolidCube(1.0);
-    glPopMatrix();
+    //glutSolidCube(1.0);
+glPopMatrix();
+
+glPopMatrix();
+
+    //Drawing Finger3
+
+glPushMatrix();
+
+        glTranslatef(1.15,0.0,-0.05);
+        glRotatef ((GLfloat) fingerbase3, 0.0, 0.0, 1.0); //finger1
+        glTranslatef(-0.025,-0.1,0.0);
+
+    // Drawing base3
+
+glPushMatrix();
+        glScalef(0.05,0.2,0.1);
+        glutWireCube(1.0);
+    //glutSolidCube(1.0);
+glPopMatrix();
+
+    // Drawing the tip3
+        glTranslatef(0.025,-0.1,0);
+        glRotatef ((GLfloat) fingerUp3, 0.0, 0.0, 1.0); //finger1
+        glTranslatef(-0.025,-0.1,0.0);
+
+
+glPushMatrix();
+        glScalef(0.05,0.2,0.1);
+        glutWireCube(1.0);
+    //glutSolidCube(1.0);
+glPopMatrix();
 
 glPopMatrix();
 
@@ -677,81 +648,73 @@ glPopMatrix();
 
 glPushMatrix();
 
-   // Drawing Left Arm
-   glTranslatef(-1.1,2.4,0.0);
-   glRotatef ((GLfloat)LeftArm, 0.0, 0.0, 1.0); // LeftArm
-   glRotatef ((GLfloat)LeftArmX, 0.0, 1.0, 0.0);
-   glTranslatef(1.1,-2.4,0.0);
-
-   glPushMatrix();
-
-   glTranslatef(-1.2,1.8,0);
-   glScalef(0.2,1.2,0.3);
-   glutWireCube(1.0);
-   //glutSolidCube(1.0);
-   glPopMatrix();
-
-   // Drawing Left ForeArm
-
-   glTranslatef(-1.2,1.2,0.0);
-   glRotatef ((GLfloat) LeftForeArm, 1.0, 0.0, 0.0); //LeftForeArm
-   glTranslatef(1.2,-1.2,0.0);
-
-   glPushMatrix();
-
-   glTranslatef(-1.2,0.6,0);
-   glScalef(0.2,1.2,0.3);
-   glutWireCube(1.0);
-   //glutSolidCube(1.0);
-
-   glPopMatrix();
-
-
-     // Drawing Finger4
+    // Drawing Left Arm
+        glTranslatef(-1.1,2.4,0.0);
+        glRotatef ((GLfloat)LeftArm, 0.0, 0.0, 1.0); // LeftArm
+        glRotatef ((GLfloat)LeftArmX, 0.0, 1.0, 0.0);
+        glTranslatef(1.1,-2.4,0.0);
 
 glPushMatrix();
 
-    glTranslatef(-1.3,0.0,0.1);
-    glRotatef ((GLfloat) fingerbase4, 0.0, 0.0, 1.0); //finger1
-    glTranslatef(0.025,-0.1,0.0);
+        glTranslatef(-1.2,1.8,0);
+        glScalef(0.2,1.2,0.3);
+        glutWireCube(1.0);
+    //glutSolidCube(1.0);
+glPopMatrix();
 
-  // Drawing base4
+    // Drawing Left ForeArm
 
-    glPushMatrix();
+        glTranslatef(-1.2,1.2,0.0);
+        glRotatef ((GLfloat) LeftForeArm, 1.0, 0.0, 0.0); //LeftForeArm
+        glTranslatef(1.2,-1.2,0.0);
+glPushMatrix();
+
+        glTranslatef(-1.2,0.6,0);
+        glScalef(0.2,1.2,0.3);
+        glutWireCube(1.0);
+    //glutSolidCube(1.0);
+glPopMatrix();
+    // Drawing Finger4
+glPushMatrix();
+
+        glTranslatef(-1.3,0.0,0.1);
+        glRotatef ((GLfloat) fingerbase4, 0.0, 0.0, 1.0); //finger1
+        glTranslatef(0.025,-0.1,0.0);
+
+    // Drawing base4
+
+glPushMatrix();
         glScalef(0.05,0.2,0.1);
         glutWireCube(1.0);
         //glutSolidCube(1.0);
-    glPopMatrix();
+glPopMatrix();
 
-  // Drawing the tip4
-    glTranslatef(-0.025,-0.1,0);
-    glRotatef ((GLfloat) fingerUp4, 0.0, 0.0, 1.0); //finger1
-    glTranslatef(0.025,-0.1,0.0);
-
-
-    glPushMatrix();
+    // Drawing the tip4
+        glTranslatef(-0.025,-0.1,0);
+        glRotatef ((GLfloat) fingerUp4, 0.0, 0.0, 1.0); //finger1
+        glTranslatef(0.025,-0.1,0.0);
+glPushMatrix();
         glScalef(0.05,0.2,0.1);
         glutWireCube(1.0);
-        //glutSolidCube(1.0);
-    glPopMatrix();
+    //glutSolidCube(1.0);
+glPopMatrix();
 
 glPopMatrix();
 
-  //Drawing Finger5
+    //Drawing Finger5
 
 glPushMatrix();
 
-    glTranslatef(-1.3,0.0,-0.1);
-    glRotatef ((GLfloat) fingerbase5, 0.0, 0.0, 1.0); //finger5
-    glTranslatef(0.025,-0.1,0.0);
+        glTranslatef(-1.3,0.0,-0.1);
+        glRotatef ((GLfloat) fingerbase5, 0.0, 0.0, 1.0); //finger5
+        glTranslatef(0.025,-0.1,0.0);
+    // Drawing base5
 
-  // Drawing base5
-
-    glPushMatrix();
+glPushMatrix();
         glScalef(0.05,0.2,0.1);
         glutWireCube(1.0);
         //glutSolidCube(1.0);
-    glPopMatrix();
+glPopMatrix();
 
   // Drawing the tip5
     glTranslatef(-0.025,-0.1,0);
@@ -759,11 +722,11 @@ glPushMatrix();
     glTranslatef(0.025,-0.1,0.0);
 
 
-    glPushMatrix();
+glPushMatrix();
         glScalef(0.05,0.2,0.1);
         glutWireCube(1.0);
         //glutSolidCube(1.0);
-    glPopMatrix();
+glPopMatrix();
 
 glPopMatrix();
 
@@ -777,11 +740,11 @@ glPushMatrix();
 
   // Drawing base6
 
-    glPushMatrix();
+glPushMatrix();
         glScalef(0.05,0.2,0.1);
         glutWireCube(1.0);
         //glutSolidCube(1.0);
-    glPopMatrix();
+glPopMatrix();
 
   // Drawing the tip6
     glTranslatef(-0.025,-0.1,0);
@@ -789,11 +752,11 @@ glPushMatrix();
     glTranslatef(0.025,-0.1,0.0);
 
 
-    glPushMatrix();
+glPushMatrix();
         glScalef(0.05,0.2,0.1);
         glutWireCube(1.0);
         //glutSolidCube(1.0);
-    glPopMatrix();
+glPopMatrix();
 
 glPopMatrix();
 
@@ -810,15 +773,14 @@ glPushMatrix();
    glRotatef ((GLfloat) LeftLegX, 1.0, 0.0, 0.0); //LeftLeg
 
    glTranslatef(0.75,0.50,0.0);
-
-   glPushMatrix();
+glPushMatrix();
 
    glTranslatef(-0.75,-1.5,0);
    glScalef(0.5,2.0,0.6);
    glutWireCube(1.0);
    //glutSolidCube(1.0);
 
-   glPopMatrix();
+glPopMatrix();
 
 
 // Drawing (Left tibia)
@@ -826,26 +788,24 @@ glPushMatrix();
    glTranslatef(-0.75,-2.5,0.0);
    glRotatef ((GLfloat) LeftTibiaX, 1.0, 0.0, 0.0); //LeftTibiaX
    glTranslatef(0.75,2.5,0.0);
-
-
-   glPushMatrix();
+glPushMatrix();
    glTranslatef(-0.75,-3,0);
    glScalef(0.5,1.0,0.6);
    glutWireCube(1.0);
    //glutSolidCube(1.0);
 
-   glPopMatrix();
+glPopMatrix();
 
 
 // Drawing Left Foot
 
-   glPushMatrix();
+glPushMatrix();
 
    glTranslatef(-0.75,-3.5,0);
    glScalef(0.7,0.3,1.2);
    glutSolidCube(1.0);
 
-   glPopMatrix();
+glPopMatrix();
 
 glPopMatrix();
 
@@ -861,13 +821,13 @@ glPushMatrix();
 
    glTranslatef(-0.75,0.50,0.0);
 
-   glPushMatrix();
+glPushMatrix();
 
    glTranslatef(0.75,-1.5,0);
    glScalef(0.5,2.0,0.6);
    glutWireCube(1.0);
   //glutSolidCube(1.0);
-   glPopMatrix();
+glPopMatrix();
 
 
 // Drawing (Right tibia)
@@ -877,7 +837,7 @@ glPushMatrix();
    glRotatef ((GLfloat) RightTibiaX, 1.0, 0.0, 0.0); //RightTibiaX
    glTranslatef(-0.75,2.5,0.0);
 
-   glPushMatrix();
+glPushMatrix();
 
    glTranslatef(0.75,-2.25,0);
    glTranslatef(0,-0.75,0);
@@ -885,41 +845,40 @@ glPushMatrix();
    glutWireCube(1.0);
    //glutSolidCube(1.0);
 
-   glPopMatrix();
+glPopMatrix();
 
 
 // Drawing Right Foot
 
-   glPushMatrix();
+glPushMatrix();
 
    glTranslatef(0.75,-3.5,0);
    glScalef(0.7,0.3,1.2);
    glutSolidCube(1.0);
 
-   glPopMatrix();
+glPopMatrix();
 
 glPopMatrix();
 
 glPopMatrix();
 
 glPushMatrix();
-    	glTranslatef(0.0, 0.015, -1.6);
-    	//glRotatef(VRot,0,1,0);
-    	// glScalef(.25, .25, .25);
+
+    	glTranslatef(a, s, d);
+    	glRotatef(rx,1.0,0.0,0.0);
+        glRotatef(ry,0.0,1.0,0.0);
+    	glRotatef(rz,0.0,0.0,1.0);
+    	glScalef(q, w, e);
     	drawmodel1();
-	glPopMatrix();
 
-   glPopMatrix();
+glPopMatrix();
+
+glPopMatrix();
 	glutSwapBuffers();
-
 }
-
-
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void specialKeys(int key, int x, int y)
-
 {
-
 	switch (key)
 
 	{
@@ -939,444 +898,109 @@ void specialKeys(int key, int x, int y)
 	glutPostRedisplay();
 
 }
-
-
-
 void keyboard(unsigned char key, int x, int y)
-
 {
 	switch (key)
 
 	{
 	case '5':
-
 		moveForward();
-
 		glutPostRedisplay();
-
 		break;
-
 	case '2':
-
 		moveBack();
-
 		glutPostRedisplay();
-
 		break;
-	case 'a':
-    if (RightArm<=90)
-    {
-      RightArm = (RightArm + 5) % 360;
-      glutPostRedisplay();
-    }
-      break;
-
-   case 'A':
-       if(RightArm>=5)
-       {
-          RightArm = (RightArm - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-   case 's':
-
-    if (LeftArm >= -90)
-    {
-        LeftArm = (LeftArm - 5) % 360;
+    case 'x':
+        if(rx<=360){
+        rx+=10.0;}
+        else {
+            rx=0;}
         glutPostRedisplay();
-    }
-      break;
-
+        break;
+	case 'a':
+        a+=0.2;
+        glutPostRedisplay();
+        break;
+   case 'A':
+        a-=0.2;
+        glutPostRedisplay();
+        break;
+   case 's':
+        s+=0.2;
+        glutPostRedisplay();
+        break;
    case 'S':
-
-        if (LeftArm <=0 )
-        {
-            LeftArm = (LeftArm + 5) % 360;
-            glutPostRedisplay();
-        }
-      break;
-
-
+        s-=0.2;
+        glutPostRedisplay();
+        break;
    case 'd':
-       if(RightForeArm<=100)
-       {
-           RightForeArm = (RightForeArm + 5) %360 ;
-            glutPostRedisplay();
-       }
-
-      break;
+        d+=0.2;
+        glutPostRedisplay();
+        break;
    case 'D':
-       if (RightForeArm>=0)
-       {
-           RightForeArm = (RightForeArm - 5) % 360;
-           glutPostRedisplay();
-       }
-      break;
-
+        d-=0.2;
+        glutPostRedisplay();
+        break;
    case 'z':
-       if (LeftForeArm<=0)
-       {
-           LeftForeArm = (LeftForeArm + 5) % 360;
-            glutPostRedisplay();
-       }
-
-      break;
-
+        if(rz<=360){
+        rz+=10.0;}
+        else {
+        rz=0;}
+        glutPostRedisplay();
+        break;
    case 'Z':
-       if (LeftForeArm>=-100)
-       {
-          LeftForeArm = (LeftForeArm - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-
-   case 'x':
-      if(LeftLeg<=5)
-       {
-           LeftLeg = (LeftLeg + 5) %360 ;
-            glutPostRedisplay();
-       }
-      break;
-   case 'X':
-      if (LeftLeg>=-90)
-       {
-           LeftLeg =(LeftLeg - 5) % 360;
-           glutPostRedisplay();
-       }
-      break;
-
-   case 'c':
-       if(RightLeg<=90)
-       {
-          RightLeg = (RightLeg + 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-   case 'C':
-       if (RightLeg>=0)
-       {
-
-          RightLeg =(RightLeg - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
+        if(rz>=0){
+        rz-=10.0;}
+        else{rz=0;}
+        glutPostRedisplay();
+        break;
    case 'q':
-       if(LeftTibiaX<=70)
-       {
-          LeftTibiaX = (LeftTibiaX + 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-   case 'Q':
-       if(LeftTibiaX>=0)
-       {
-          LeftTibiaX = (LeftTibiaX - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-
+        q+=2;
+        glutPostRedisplay();
+        break;
+    case 'Q':
+        q-=2;
+        glutPostRedisplay();
+        break;
     case 'w':
-      if(RightTibiaX<=70)
-       {
-           RightTibiaX = (RightTibiaX + 5) %360 ;
-            glutPostRedisplay();
-       }
-      break;
-   case 'W':
-      if (RightTibiaX>=0)
-       {
-           RightTibiaX = (RightTibiaX - 5) % 360;
-           glutPostRedisplay();
-       }
-
-      break;
-
-  case 'e':
-       if(LeftLegX<=90)
-       {
-          LeftLegX = (LeftLegX + 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-   case 'E':
-       if(LeftLegX>=-90)
-       {
-          LeftLegX = (LeftLegX - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-
-     case 'r':
-       if(RightLegX<=90)
-       {
-          RightLegX = (RightLegX + 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-   case 'R':
-       if(RightLegX>=-90)
-       {
-          RightLegX = (RightLegX - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-
-      case 'f':
-          RightArmX = (RightArmX + 5) % 360;
-          glutPostRedisplay();
-      break;
-
-     case 'F':
-         RightArmX = (RightArmX - 5) % 360;
-          glutPostRedisplay();
-      break;
-
-      case 'v':
-          LeftArmX = (LeftArmX + 5) % 360;
-          glutPostRedisplay();
-      break;
-
-     case 'V':
-         LeftArmX = (LeftArmX - 5) % 360;
-          glutPostRedisplay();
-      break;
-
-
-      //finger 1
-   case 'p':
-       if(fingerbase1<=45)
-       {
-           fingerbase1 = (fingerbase1 + 5) %360 ;
-            glutPostRedisplay();
-       }
-
-      break;
-   case 'P':
-       if (fingerbase1>=-45)
-       {
-           fingerbase1 = (fingerbase1 - 5) % 360;
-           glutPostRedisplay();
-       }
-
-      break;
-
-
-    case 'o':
-       if (fingerUp1<=45)
-       {
-            fingerUp1 = (fingerUp1 + 5) % 360;
-            glutPostRedisplay();
-       }
-
-      break;
-
-   case 'O':
-       if (fingerUp1>=-45)
-       {
-          fingerUp1 = (fingerUp1 - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-
-      //finger 2
-   case 'i':
-       if(fingerbase2<=45)
-       {
-           fingerbase2 = (fingerbase2 + 5) %360 ;
-            glutPostRedisplay();
-       }
-
-      break;
-   case 'I':
-       if (fingerbase2>=-45)
-       {
-           fingerbase2 = (fingerbase2 - 5) % 360;
-           glutPostRedisplay();
-       }
-
-      break;
-
-
-    case 'u':
-       if (fingerUp2<=45)
-       {
-            fingerUp2 = (fingerUp2 + 5) % 360;
-            glutPostRedisplay();
-       }
-
-      break;
-
-   case 'U':
-       if (fingerUp2>=-45)
-       {
-          fingerUp2 = (fingerUp2 - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-
-      //finger 3
-   case 'l':
-       if(fingerbase3<=45)
-       {
-           fingerbase3 = (fingerbase3 + 5) %360 ;
-            glutPostRedisplay();
-       }
-
-      break;
-   case 'L':
-       if (fingerbase3>=-45)
-       {
-           fingerbase3 = (fingerbase3 - 5) % 360;
-           glutPostRedisplay();
-       }
-
-      break;
-
-
-    case 'k':
-       if (fingerUp3<=45)
-       {
-            fingerUp3 = (fingerUp3 + 5) % 360;
-            glutPostRedisplay();
-       }
-
-      break;
-
-    case 'K':
-       if (fingerUp3>=-45)
-       {
-          fingerUp3 = (fingerUp3 - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-      //finger 4
-   case 'b':
-       if(fingerbase4<=45)
-       {
-           fingerbase4 = (fingerbase4 + 5) %360 ;
-            glutPostRedisplay();
-       }
-
-      break;
-   case 'B':
-       if (fingerbase4>=-45)
-       {
-           fingerbase4 = (fingerbase4 - 5) % 360;
-           glutPostRedisplay();
-       }
-
-      break;
-
-
-    case 'n':
-       if (fingerUp4<=45)
-       {
-            fingerUp4 = (fingerUp4 + 5) % 360;
-            glutPostRedisplay();
-       }
-
-      break;
-
-   case 'N':
-       if (fingerUp4>=-45)
-       {
-          fingerUp4 = (fingerUp4 - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-
-      //finger 5
-   case 'm':
-       if(fingerbase5<=45)
-       {
-           fingerbase5 = (fingerbase5 + 5) %360 ;
-            glutPostRedisplay();
-       }
-
-      break;
-   case 'M':
-       if (fingerbase5>=-45)
-       {
-           fingerbase5 = (fingerbase5 - 5) % 360;
-           glutPostRedisplay();
-       }
-
-      break;
-
-
-    case 'g':
-       if (fingerUp5<=45)
-       {
-            fingerUp5 = (fingerUp5 + 5) % 360;
-            glutPostRedisplay();
-       }
-
-      break;
-
-   case 'G':
-       if (fingerUp5>=-45)
-       {
-          fingerUp5= (fingerUp5 - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
-
-
-      //finger 6
-
-   case 'h':
-       if(fingerbase6<=45)
-       {
-           fingerbase6 = (fingerbase6 + 5) %360 ;
-            glutPostRedisplay();
-       }
-
-      break;
-   case 'H':
-       if (fingerbase6>=-45)
-       {
-           fingerbase6 = (fingerbase6 - 5) % 360;
-           glutPostRedisplay();
-       }
-
-      break;
-
-
-    case 'j':
-       if (fingerUp6<=45)
-       {
-            fingerUp6 = (fingerUp6 + 5) % 360;
-            glutPostRedisplay();
-       }
-
-      break;
-
-    case 'J':
-       if (fingerUp6>=-45)
-       {
-          fingerUp6 = (fingerUp6 - 5) % 360;
-          glutPostRedisplay();
-       }
-      break;
+        w+=2;
+        glutPostRedisplay();
+        break;
+    case 'W':
+        w-=2;
+        glutPostRedisplay();
+        break;
+    case 'e':
+        q+=2;
+        glutPostRedisplay();
+        break;
+    case 'E':
+        q-=2;
+        glutPostRedisplay();
+        break;
+   case 'X':   
+        if(rx>=0){
+        rx-=10.0;}
+        else{rx=0;}
+        glutPostRedisplay();
+        break;
+    case 'y':
+        if(ry<=360){
+        ry+=10.0;}
+        else {
+        ry=0;}
+        glutPostRedisplay();
+        break;
+    case 'Y':
+        if(ry>=0){
+        ry-=10.0;}
+        else{ry=0;}
+        glutPostRedisplay();
+        break;
 
 	default:
-
 		break;
-
 	}
 
 }
@@ -1484,11 +1108,9 @@ int main(int argc, char **argv)
     init();
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
-	//glutDisplayFunc(display);
     glutSpecialFunc(specialKeys);
 	glutKeyboardFunc(keyboard);
 	glutTimerFunc(0,timer,0);
-
 	glutCreateMenu(screen_menu);
 	glutAddMenuEntry("Models", 0);
 	glutAddMenuEntry("", 0);
@@ -1502,20 +1124,7 @@ int main(int argc, char **argv)
 	glutAddMenuEntry("Dragon", 'D');
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
-/*	glutSpecialFunc(specialKeys);
-	glutKeyboardFunc(Keyboard);
-	Timer(0);
-	glutCreateMenu(screen_menu);
-   
-	glutAddMenuEntry("Models", 0);
-	glutAddMenuEntry("", 0);
-	glutAddMenuEntry("wood2", 's');
-	glutAddMenuEntry("wood", 'a');
-	glutAddMenuEntry("metal", 'd');
 
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
-    */
-	//glutTimerFunc(0,Timer1,0);
 	glutMainLoop();
 	return 0;
 }

@@ -17,18 +17,18 @@ RightTibiaX = 0,LeftLeg = 0,LeftLegX = 0 , LeftTibiaX = 0,LeftFootZ = 0,fingerba
 fingerUp1=0,fingerUp2=0,fingerUp3=0,fingerUp4=0,fingerUp5=0,fingerUp6=0;
 
 int moving, startx, starty;
-float a=0.0,s=-1.5,d=-0.6;
+float a=5.0,s=5.0,d=0.0;
 
 float DRot = 90;
-int rx=0,ry=0,rz=0,q=10,w=10,e=10;
+int rx=220,ry=0,rz=40,q=14,w=14,e=14;
 float Zmax, Zmin;
 GLMmodel* pmodel;
 float VRot =0.0;
 
 GLMmodel* pmodel1;
-GLMmodel* pmodel2 = glmReadOBJ("data/flowers.obj");
-GLMmodel* pmodel3 = glmReadOBJ("data/rose+vase.obj");
-GLMmodel* pmodel4 = glmReadOBJ("data/al.obj");
+GLMmodel* pmodel2 = glmReadOBJ("data/11803_Airplane_v1_l1.obj");
+GLMmodel* pmodel3 = glmReadOBJ("data/11803_Airplane_v1_l1.obj");
+GLMmodel* pmodel4 = glmReadOBJ("data/11803_Airplane_v1_l1.obj");
 /*
 double eye[] = { 0, 0, 0 };
 double center[] = { 0, 0, -1 };
@@ -305,9 +305,12 @@ void timer(int value)
 
 
 
+
+
 void init(void)
 
 {
+    
     glEnable(GL_LIGHTING);
     
         glEnable(GL_LIGHT2);
@@ -321,7 +324,8 @@ void init(void)
 
         // Enable Depth buffer
         glEnable(GL_DEPTH_TEST);
-///////////////////////////////////////////////////////////////////////////////////
+
+
     /*
     glLightfv(GL_LIGHT1, GL_POSITION, light_position);
     glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
@@ -343,29 +347,20 @@ screen_menu(int value)
 	char* name = 0;
 
 	switch (value) {
-	case 'a':
-		name = "data/al.obj";
-		break;
 	case 's':
-		name = "data/soccerball.obj";
+		name = "data/13578_Pallas_Cat_v1_L3.obj";
 		break;
 	case 'd':
 		name = "data/15581_Equestrian_Obstacles-Post_and_Plank_v1.obj";
 		break;
 	case 'f':
-		name = "data/flowers.obj";
+		name = "data/12246_Bird_v2_L2.obj";
 		break;
 	case 'j':
 		name = "data/11703_skateboard_v1_L3.obj";
 		break;
 	case 'p':
-		name = "data/porsche.obj";
-		break;
-	case 'r':
-		name = "data/rose+vase.obj";
-		break;
-	case 'D':
-		name = "data/dragon-fixed.obj";
+		name = "data/11803_Airplane_v1_l1.obj";
 		break;
 	}
 
@@ -385,7 +380,7 @@ screen_menu(int value)
 void drawmodel1(void)
 {
 	if (!pmodel) {
-		pmodel = glmReadOBJ("data/rose+vase.obj");
+		pmodel = glmReadOBJ("data/11803_Airplane_v1_l1.obj");
 
 		if (!pmodel) exit(0);
 		glmUnitize(pmodel);
@@ -467,7 +462,7 @@ void initRendering() {
 void display(void)
 
 {
-        glClearColor(0.0, 0.0, 0.2, 0.0);
+        glClearColor(0.0, 0.0, 0.2, 0.0); // changing the background color
         // Clear Depth and Color buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -488,7 +483,7 @@ glPopMatrix();
 
 glPushMatrix();
 	glTranslatef(0, 0, -1);
-	//floor
+// Ground
 glPushMatrix();
 	    glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, _textureId);
@@ -861,7 +856,7 @@ glPopMatrix();
 glPopMatrix();
 
 glPopMatrix();
-
+// showing the object
 glPushMatrix();
 
     	glTranslatef(a, s, d);
@@ -876,7 +871,6 @@ glPopMatrix();
 glPopMatrix();
 	glutSwapBuffers();
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void specialKeys(int key, int x, int y)
 {
 	switch (key)
@@ -972,11 +966,11 @@ void keyboard(unsigned char key, int x, int y)
         glutPostRedisplay();
         break;
     case 'e':
-        q+=2;
+        e+=2;
         glutPostRedisplay();
         break;
     case 'E':
-        q-=2;
+        e-=2;
         glutPostRedisplay();
         break;
    case 'X':   
@@ -1102,7 +1096,7 @@ int main(int argc, char **argv)
     glutInit(&argc, argv);
 	glutInitWindowSize(windowWidth, windowHeight);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutCreateWindow("Final Project");
+	glutCreateWindow("Application example in computer graphics objectives");
 	initRendering();
 	glutDisplayFunc(display);
     init();
@@ -1112,19 +1106,14 @@ int main(int argc, char **argv)
 	glutKeyboardFunc(keyboard);
 	glutTimerFunc(0,timer,0);
 	glutCreateMenu(screen_menu);
-	glutAddMenuEntry("Models", 0);
+	glutAddMenuEntry("Objects", 0);
 	glutAddMenuEntry("", 0);
-	glutAddMenuEntry("Soccerball", 's');
-	glutAddMenuEntry("Al Capone", 'a');
-	glutAddMenuEntry("F-16 Jet", 'j');
-	glutAddMenuEntry("Dolphins", 'd');
-	glutAddMenuEntry("Flowers", 'f');
-	glutAddMenuEntry("Porsche", 'p');
-	glutAddMenuEntry("Rose", 'r');
-	glutAddMenuEntry("Dragon", 'D');
+	glutAddMenuEntry("Cat", 's');
+	glutAddMenuEntry("Scooter", 'j');
+	glutAddMenuEntry("Obstacle", 'd');
+	glutAddMenuEntry("Swan", 'f');
+	glutAddMenuEntry("Aircraft", 'p');
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
-
-
 	glutMainLoop();
 	return 0;
 }
